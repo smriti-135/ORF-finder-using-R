@@ -1,0 +1,186 @@
+codons <- c('GCT'='Ala','GCC'='Ala','GCA'='Ala','GCG'='Ala','CGT'='Arg','CGC'='Arg','CGA'='Arg','CGG'='Arg','AGA'='Arg','AGG'='Arg',
+             'AAT'='Asn','AAC'='Asn','GAT'='Asp','GAC'='Asp','TGT'='Cys','TGC'='Cys','CAA'='Gln','CAG'='Gln','GAA'='Glu','GAG'='Glu',
+             'GGT'='Gly','GGC'='Gly','GGA'='Gly','GGG'='Gly','CAT'='His','CAC'='His','ATT'='Ile','ATC'='Ile','ATA'='Ile','TTA'='Leu',
+             'TTG'='Leu','CTT'='Leu','CTC'='Leu','CTA'='Leu','CTG'='Leu','AAA'='Lys','AAG'='Lys','ATG'='Met','TTT'='Phe','TTC'='Phe',
+             'CCT'='Pro','CCC'='Pro','CCA'='Pro','CCG'='Pro','TCT'='Ser','TCC'='Ser','TCA'='Ser','TCG'='Ser','AGT'='Ser','AGC'='Ser',
+             'ACT'='Thr','ACC'='Thr','ACA'='Thr','ACG'='Thr','TGG'='Trp','TAT'='Tyr','TAC'='Tyr','GTT'='Val','GTC'='Val','GTA'='Val',
+             'GTG'='Val','TAA'='','TAG'='','TGA'='')
+
+library(stringr)
+
+seq="gatgttcgggggcgcctgtgcgaagccgaatgtccttaccctggttaattgtctaagtcagttatttaacatcgtcacgggtgacacgatcgctttgagctattataagtgtcagactgccacttaccgttgatagtggtcaatgtattt"
+seq<- toupper(seq)
+cat(paste0("The original sequence is \n", (seq), "\n\n"))
+#file = open('sequence 2.fasta','r')
+
+# newlist <- c()
+newlist <- strsplit(seq, "")[[1]]
+listtwo <- c()
+for (lines in seq) {
+    count <- 0
+    if (lines == "\n") {
+        newlist <- c(newlist, lines)
+        }
+}
+
+for (i in 1:(length(newlist)-1)) {
+    seq <- paste(seq, newlist[i], sep="")
+}
+result <- str_replace_all(seq, "\n", "")
+
+# frames +1 +2 +3
+for (k in 0:2) {
+  seq_pos <- ""
+  count <- 0
+  for (i in (k+1):nchar(result)) {
+    seq_pos <- paste0(seq_pos, substr(result, i, i))
+    count <- count + 1
+    if (count == 3) {
+      count <- 0
+      seq_pos <- paste0(seq_pos, " ")
+    }
+  }
+  cat(paste0("\n\nThe +", k+1, " reading frame is:\n", seq_pos, "\n\n"))
+  translation <- function(final_string) {
+        points <- 0
+        translated <- ''
+        letters <- ''
+        final <- gsub(' ', '', final_string)
+        for (i in 1:nchar(final)) {
+            letters <- paste0(letters, substr(final, i, i))
+            points <- points + 1
+            if (points == 3) {
+            translated <- paste0(translated, codons[[letters]], ' ')
+            points <- 0
+            letters <- ''
+            }
+        }
+        if (final_string == '') {
+            return(NULL)
+        } else {
+            return(translated)
+        }
+    }
+    orfs <- list()
+    point <- 0
+    found <- 1
+    final_string <- ''
+    for (i in 1:nchar(seq_pos)) {
+      tryCatch({
+        if (substr(seq_pos, i, i+2) == 'ATG') {
+          found <- found + 1
+          for (j in (i+3):nchar(seq_pos)) {
+            if (substr(seq_pos, j, j+2) %in% c('TAA', 'TAG', 'TGA')) {
+              point <- point + 1
+              break
+            } else {
+              final_string <- paste0(final_string, substr(seq_pos, j, j))
+            }
+          }
+          if (found > 1 && found %% found == 0) {
+            orfs <- c(orfs, paste0('ATG', final_string))
+            final_string <- ''
+          }
+        }
+      }, error = function(e) {})
+    }
+    if (point != 0) {
+      for (i in 1:length(orfs)) {
+        cat(paste0('The ORFs ', i, ' is: \n', orfs[[i]], '\n\n'))
+        cat(paste0('The amino acid sequence for ORF', i, ' is: \n', translation(orfs[[i]]), '\n\n'))
+      }
+    } else if (point == 0) {
+      cat("No ORFs were found\n\n")
+    } else if (!grepl('ATG', seq_pos)) {
+      cat("No reading frames were found\n\n")
+    }
+}
+
+#code to find complementary strand code        
+spaces <- function(result) {
+  seq_pos <- ""
+  count <- 0
+  for (i in 1:nchar(result)) {
+    seq_pos <- paste(seq_pos, substr(result, i, i))
+    count <- count + 1
+    if (count == 3) {
+      count <- 0
+      seq_pos <- paste(seq_pos, " ")
+    }
+  }
+  return(seq_pos)
+}
+
+comp <- chartr("ATGC", "TACG", result)
+cat("\n*********************************************************************************************************************************\n")
+cat(paste("The complementary sequence is \n", (comp), "\n\n"))
+
+# code for frames -1 -2 -3
+for (f in 1:3) {
+  seq_neg <- ""
+  count <- 0
+  for (i in f:nchar(comp)) {
+    seq_neg <- paste0(seq_neg, substr(comp, i, i))
+    count <- count + 1
+    if (count == 3) {
+      count <- 0
+      seq_neg <- paste0(seq_neg, " ")
+    }
+  }
+  cat(paste0("\n\nThe -", f, " reading frame is: \n", seq_neg, "\n\n"))
+  
+  translation <- function(final_string) {
+    points <- 0
+    translated <- ''
+    letters <- ''
+    final <- gsub(' ', '', final_string)
+    for (i in 1:nchar(final)) {
+      letters <- paste0(letters, substr(final, i, i))
+      points <- points + 1
+      if (points == 3) {
+        translated <- paste0(translated, codons[letters])
+        points <- 0
+        letters <- ''
+      }
+    }
+    if (final_string == '') {
+      return(NULL)
+    } else {
+      return(translated)
+    }
+  }
+  
+  orfs <- list()
+  point <- 0
+  found <- 1
+  final_string <- ''
+  for (i in 1:nchar(seq_neg)) {
+    tryCatch({
+      if (substr(seq_neg, i, i+2) == 'ATG') {
+        found <- found + 1
+        for (j in (i+3):nchar(seq_neg)) {
+          if (substr(seq_neg, j, j+2) %in% c('TAA', 'TAG', 'TGA')) {
+            point <- point + 1
+            break
+          } else {
+            final_string <- paste0(final_string, substr(seq_neg, j, j))
+          }
+        }
+        if (found > 1 && found %% found == 0) {
+          orfs <- c(orfs, paste('ATG', final_string))
+          final_string <- ''
+        }
+      }
+    }, error = function(e) {})
+  }
+  if (point != 0) {
+    for (i in 1:length(orfs)) {
+      cat(paste0('The ORF ', i, ' is: \n', orfs[[i]], '\n\n'))
+      cat(paste0('The amino acid sequence for ORF ', i, ' is: \n', translation(orfs[[i]]), '\n\n\n'))
+    }
+  } else if (point == 0) {
+    cat("No ORFs were found\n\n")
+  } else if (!grepl('ATG', seq_neg)) {
+    cat("No reading frames were found\n\n")
+  }
+}
