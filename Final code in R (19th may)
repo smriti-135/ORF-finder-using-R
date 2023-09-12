@@ -35,27 +35,6 @@ for (i in 2:(length(newlist) - 1)) {
     seq <- paste0(seq, newlist[i])
 }
 
-#function for translation into amino acids
-# translation <- function(final_string){
-#   points <- 0
-#   translated <- ''
-#   letters <- ''
-#   final <- gsub(" ", "", final_string)
-#   for (i in 1:nchar(final)){
-#     letters <- paste(letters, substr(final, i, i), sep = "")
-#     points <- points + 1
-#     if (points == 3){
-#       translated <- paste(translated, codons[letters], sep = " ")
-#       points <- 0
-#       letters <- ''
-#     }
-#   }
-#   if (final_string == ''){
-#     return(NULL)
-#   } else {
-#     return(translated)
-#   }
-# }
 translation <- function(final_string) {
   library(stringr)
   points <- 0
@@ -87,13 +66,11 @@ spaces <- function(f, result) {
   for (i in (f+1):nchar(result)) {
     seq_pos <- paste0(seq_pos, substr(result, i, i))
     count <- count + 1
-    
     if (count == 3) {
       count <- 0
       seq_pos <- paste0(seq_pos, " ")
     }
   }
-  
   return(seq_pos)
 }
 
@@ -111,7 +88,6 @@ driver_main <- function(count, result, number) {
     } else if (count == 1) {
       cat(paste("\n\n\nThe -", f + 1, "reading frame is:", seq_pos, "\n"))
     }
-    
     orfs <- c()
     point <- 0
     found <- 1
@@ -129,7 +105,7 @@ driver_main <- function(count, result, number) {
           }
         }
         if (found > 1) {
-          orfs <- append(orfs, paste0("ATG", final_string))
+          orfs <- append(orfs, paste0("A", final_string))
           final_string <- ''
         }
       }
@@ -151,6 +127,7 @@ driver_main <- function(count, result, number) {
       cat("No reading frames were found\n")
     }
   }
+#   return (" ")
 }
 
 count <- 0
